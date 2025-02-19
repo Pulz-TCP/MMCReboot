@@ -541,7 +541,7 @@ public class Main {
 
         int mSec = (minutes * 60);
         double val = ((mSec + seconds) * 100 / 300);
-        float percent = (float)val / 100.0f;
+        float percent = Math.max(0.0f, Math.min(1.0f, (float) val / 100.0f));
 
         Sponge.getServer().getOnlinePlayers().stream().filter(player -> minutes < 5 && hours == 0).forEach(player -> {
             player.setScoreboard(board);
