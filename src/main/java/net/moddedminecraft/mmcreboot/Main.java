@@ -522,45 +522,49 @@ public class Main {
         return voteSeconds;
     }
 
-    public void displayRestart(double rInterval) {
-        double timeLeft = rInterval - ((double)(System.currentTimeMillis() - startTimestamp) / 1000);
-        int hours = (int)(timeLeft / 3600);
-        int minutes = (int)((timeLeft - hours * 3600) / 60);
-        int seconds = (int)timeLeft % 60;
+public void displayRestart(double rInterval) {
+    double timeLeft = rInterval - ((double)(System.currentTimeMillis() - startTimestamp) / 1000);
+    int hours = (int)(timeLeft / 3600);
+    int minutes = (int)((timeLeft - hours * 3600) / 60);
+    int seconds = (int)timeLeft % 60;
 
-        NumberFormat formatter = new DecimalFormat("00");
-        String s = formatter.format(seconds);
+    NumberFormat formatter = new DecimalFormat("00");
+    String s = formatter.format(seconds);
 
-        board = Scoreboard.builder().build();
-        Objective obj = Objective.builder().name("restart").criterion(Criteria.DUMMY).displayName(Text.of(Messages.getSidebarRestartTimerTitle())).build();
+    board = Scoreboard.builder().build();
+    Objective obj = Objective.builder().name("restart").criterion(Criteria.DUMMY).displayName(fromLegacy(Messages.getSidebarRestartTimerTitle())).build();
 
-        board.addObjective(obj);
-        board.updateDisplaySlot(obj, DisplaySlots.SIDEBAR);
+    board.addObjective(obj);
+    board.updateDisplaySlot(obj, DisplaySlots.SIDEBAR);
 
-        obj.getOrCreateScore(Text.builder(Integer.toString(minutes) +":" + s).color(TextColors.GREEN).build()).setScore(0);
+    Component score = Component.text(minutes + ":" + s).color(TextColor.color(0, 255, 0));
+    obj.findOrCreateScore(score).setScore(0);
 
-        int mSec = (minutes * 60);
-        double val = ((mSec + seconds) * 100 / 300);
-        float percent = Math.max(0.0f, Math.min(1.0f, (float) val / 100.0f));
+    int mSec = (minutes * 60);
+    double val = ((mSec + seconds) * 100 / 300);
+    float percent = Math.max(0.0f, Math.min(1.0f, (float) val / 100.0f));
 
-        Sponge.getServer().getOnlinePlayers().stream().filter(player -> minutes < 5 && hours == 0).forEach(player -> {
-            player.setScoreboard(board);
-            if (Config.bossbarEnabled) {
+    Sponge.server().onlinePlayers().stream().filter(player -> minutes < 5 && hours == 0).forEach(player -> {
+        player.setScoreboard(board);
+        if (Config.bossbarEnabled) {
+            if (percent >= 0.0f && percent <= 1.0f) {
                 if (bar == null) {
-                    bar = BossBar.bossBar(
-                            Component.text(Config.bossbarTitle.replace("{minutes}", Integer.toString(minutes)).replace("{seconds}", s)),
-                            percent,
-                            BossBar.Color.GREEN,
-                            BossBar.Overlay.PROGRESS);
+                    bar = ServerBossBar.builder()
+                            .name(Component.text(Config.bossbarTitle.replace("{minutes}", Integer.toString(minutes)).replace("{seconds}", s)))
+                            .percent(percent)
+                            .color(ServerBossBar.Color.GREEN)
+                            .overlay(ServerBossBar.Overlay.PROGRESS)
+                            .build();
                 } else {
-                    bar.progress(percent);
+                    bar.percent(percent);
                 }
+                bar.addPlayer(player);
             } else {
                 logger.warn("[MMCReboot] Invalid boss bar percent: " + percent);
             }
         }
     });
-    }
+}
 
     public void displayVotes() {
         board = Scoreboard.builder().build();
