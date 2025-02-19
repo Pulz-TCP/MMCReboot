@@ -547,18 +547,19 @@ public class Main {
             player.setScoreboard(board);
             if (Config.bossbarEnabled) {
                 if (bar == null) {
-                    bar = ServerBossBar.builder()
-                            .name(Text.of(Config.bossbarTitle.replace("{minutes}", Integer.toString(minutes)).replace("{seconds}", s)))
-                            .color(BossBarColors.GREEN)
-                            .overlay(BossBarOverlays.PROGRESS)
-                            .percent(percent)
-                            .build();
+                    bar = BossBar.bossBar(
+                            Component.text(Config.bossbarTitle.replace("{minutes}", Integer.toString(minutes)).replace("{seconds}", s)),
+                            percent,
+                            BossBar.Color.GREEN,
+                            BossBar.Overlay.PROGRESS);
                 } else {
-                    bar.setPercent(percent);
+                    bar.progress(percent);
                 }
-                bar.addPlayer(player);
+            } else {
+                logger.warn("[MMCReboot] Invalid boss bar percent: " + percent);
             }
-        });
+        }
+    });
     }
 
     public void displayVotes() {
